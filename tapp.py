@@ -53,53 +53,63 @@ def mainpage():
   #유저 정보 세션
   user_id = session['id']
   
-  #cur.execute("SELECT * FROM movies ORDER BY rel_date DESC;")
+  current_sort_by1 = 'latest'
+  current_sort_by2 = 'latest'
+  
   if request.method == 'POST':
     sort_by1 = request.form.get('sort_by1')
-    if sort_by1 == 'latest':
-      cur.execute("SELECT m.id, m.title, m.director, m.genre, m.rel_date, trunc(AVG(r.ratings),1) AS ratings \
-        FROM movies m JOIN reviews r ON m.id = r.mid GROUP BY m.id, m.title, m.director, m.genre, m.rel_date\
-        ORDER BY rel_date DESC;")
-    elif sort_by1 == 'genre':
-      cur.execute("SELECT m.id, m.title, m.director, m.genre, m.rel_date, trunc(AVG(r.ratings),1) AS ratings \
-        FROM movies m JOIN reviews r ON m.id = r.mid GROUP BY m.id, m.title, m.director, m.genre, m.rel_date\
-        ORDER BY genre;")  
-    else:
-      cur.execute("SELECT m.id, m.title, m.director, m.genre, m.rel_date, trunc(AVG(r.ratings),1) AS ratings \
-        FROM movies m JOIN reviews r ON m.id = r.mid GROUP BY m.id, m.title, m.director, m.genre, m.rel_date\
-        order by ratings DESC;") 
+    sort_by2 = request.form.get('sort_by2')
+
+    # sort_by1 값 업데이트
+    if sort_by1:
+      current_sort_by1 = sort_by1
+    # sort_by2 값 업데이트
+    if sort_by2:
+      current_sort_by2 = sort_by2
+  
+    
+  if current_sort_by1 == 'latest':
+    cur.execute("SELECT m.id, m.title, m.director, m.genre, m.rel_date, trunc(AVG(r.ratings),1) AS ratings \
+      FROM movies m JOIN reviews r ON m.id = r.mid GROUP BY m.id, m.title, m.director, m.genre, m.rel_date\
+      ORDER BY rel_date DESC;")
+  elif current_sort_by1 == 'genre':
+    cur.execute("SELECT m.id, m.title, m.director, m.genre, m.rel_date, trunc(AVG(r.ratings),1) AS ratings \
+      FROM movies m JOIN reviews r ON m.id = r.mid GROUP BY m.id, m.title, m.director, m.genre, m.rel_date\
+      ORDER BY genre;")  
+  elif current_sort_by1 == 'ratings':
+    cur.execute("SELECT m.id, m.title, m.director, m.genre, m.rel_date, trunc(AVG(r.ratings),1) AS ratings \
+      FROM movies m JOIN reviews r ON m.id = r.mid GROUP BY m.id, m.title, m.director, m.genre, m.rel_date\
+      order by ratings DESC;") 
   result1 = cur.fetchall()
   
-  #cur.execute("SELECT * from movies, reviews where movies.id = reviews.mid ORDER BY rev_time DESC;")
-  if request.method == 'POST':
-    sort_by2 = request.form.get('sort_by2')
-    if sort_by2 == 'latest':
-      cur.execute("with subquery as ( \
-        SELECT u.id, COALESCE(f.followers_count, 0) AS followers_count\
-        FROM users u LEFT JOIN ( \
-        SELECT opid, COUNT(*) AS followers_count\
-        FROM ties WHERE tie = 'follow' GROUP BY opid) f ON u.id = f.opid)\
-        select ratings, title, director, genre, rel_date, mid, uid, m.id, review, rev_time, s.followers_count\
-        from movies m, reviews r, subquery s where m.id = r.mid and r.uid = s.id\
-        group by uid, m.id, r.mid, s.followers_count ORDER BY rev_time DESC;")
-    elif sort_by2 == 'title':
-      cur.execute("with subquery as ( \
-        SELECT u.id, COALESCE(f.followers_count, 0) AS followers_count\
-        FROM users u LEFT JOIN ( \
-        SELECT opid, COUNT(*) AS followers_count\
-        FROM ties WHERE tie = 'follow' GROUP BY opid) f ON u.id = f.opid)\
-        select ratings, title, director, genre, rel_date, mid, uid, m.id, review, rev_time, s.followers_count\
-        from movies m, reviews r, subquery s where m.id = r.mid and r.uid = s.id\
-        group by uid, m.id, r.mid, s.followers_count ORDER BY title;") 
-    else:
-      cur.execute(" with subquery as ( \
-        SELECT u.id, COALESCE(f.followers_count, 0) AS followers_count\
-        FROM users u LEFT JOIN ( \
-        SELECT opid, COUNT(*) AS followers_count\
-        FROM ties WHERE tie = 'follow' GROUP BY opid) f ON u.id = f.opid)\
-        select ratings, title, director, genre, rel_date, mid, uid, m.id, review, rev_time, s.followers_count\
-        from movies m, reviews r, subquery s where m.id = r.mid and r.uid = s.id\
-        group by uid, m.id, r.mid, s.followers_count order by s.followers_count DESC ")
+    
+  if current_sort_by2 == 'latest':
+    cur.execute("with subquery as ( \
+      SELECT u.id, COALESCE(f.followers_count, 0) AS followers_count\
+      FROM users u LEFT JOIN ( \
+      SELECT opid, COUNT(*) AS followers_count\
+      FROM ties WHERE tie = 'follow' GROUP BY opid) f ON u.id = f.opid)\
+      select ratings, title, director, genre, rel_date, mid, uid, m.id, review, rev_time, s.followers_count\
+      from movies m, reviews r, subquery s where m.id = r.mid and r.uid = s.id\
+      group by uid, m.id, r.mid, s.followers_count ORDER BY rev_time DESC;")
+  elif current_sort_by2 == 'title':
+    cur.execute("with subquery as ( \
+      SELECT u.id, COALESCE(f.followers_count, 0) AS followers_count\
+      FROM users u LEFT JOIN ( \
+      SELECT opid, COUNT(*) AS followers_count\
+      FROM ties WHERE tie = 'follow' GROUP BY opid) f ON u.id = f.opid)\
+      select ratings, title, director, genre, rel_date, mid, uid, m.id, review, rev_time, s.followers_count\
+      from movies m, reviews r, subquery s where m.id = r.mid and r.uid = s.id\
+      group by uid, m.id, r.mid, s.followers_count ORDER BY title;") 
+  elif current_sort_by2 == 'followers':
+    cur.execute(" with subquery as ( \
+      SELECT u.id, COALESCE(f.followers_count, 0) AS followers_count\
+      FROM users u LEFT JOIN ( \
+      SELECT opid, COUNT(*) AS followers_count\
+      FROM ties WHERE tie = 'follow' GROUP BY opid) f ON u.id = f.opid)\
+      select ratings, title, director, genre, rel_date, mid, uid, m.id, review, rev_time, s.followers_count\
+      from movies m, reviews r, subquery s where m.id = r.mid and r.uid = s.id\
+      group by uid, m.id, r.mid, s.followers_count order by s.followers_count DESC ")
   result2 = cur.fetchall()
   
   return render_template("main.html", movies=result1, reviews=result2, user_id = user_id)
