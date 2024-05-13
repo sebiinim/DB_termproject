@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>movie_detail{{movie_id}}</title>
+  </head>
+  <body>
+    <div style="display: flex; align-items: center">
+      <p style="margin-right: 10px">ID :</p>
+      <form action="{{ url_for('user_detail', user_id=user_id) }}" method="get">
+        <button type="submit">{{ user_id }}</button>
+      </form>
+    </div>
+    <form action="{{ url_for('logout') }}" method="get">
+      <button type="submit">logout</button>
+    </form>
+    <form action="{{ url_for('mainpage') }}" method="get">
+      <button type="submit">mainpage</button>
+    </form>
+
+    <h1>{{movie_detail[3]}}</h1>
+    <table border="1">
+      <thead>
+        <th>director</th>
+        <th>genre</th>
+        <th>release date</th>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{movie_detail[0]}}</td>
+          <td>{{movie_detail[1]}}</td>
+          <td>{{movie_detail[2]}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>[Reviews]</h3>
+    <h4>Average Rating: {{avg_rating[0]}}</h4>
+    <table border="1">
+      <thead>
+        <th>ratings</th>
+        <th>user</th>
+        <th>review</th>
+        <th>time</th>
+      </thead>
+      <tbody>
+        {% for movie_review in movie_reviews %}
+        <tr>
+          <td>{{movie_review[0]}}</td>
+          <td>
+            <form
+              action="{{ url_for('user_detail', user_id=movie_review[1]) }}"
+              method="get"
+            >
+              <button type="submit">{{ movie_review[1] }}</button>
+            </form>
+          </td>
+          <td>{{movie_review[2]}}</td>
+          <td>{{movie_review[3]}}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <br />
+    <form
+      action="{{ url_for('submit_review', mid = movie_detail[4] , uid=user_id) }}"
+      method="post"
+    >
+      <label for="rating">My Review: </label>
+      <select name="rating" id="rating">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+      </select>
+      <br />
+      <textarea
+        name="review"
+        id="review"
+        rows="4"
+        cols="50"
+        placeholder="Enter your review here"
+      ></textarea>
+      <br />
+      <input type="submit" value="Submit" />
+    </form>
+  </body>
+</html>

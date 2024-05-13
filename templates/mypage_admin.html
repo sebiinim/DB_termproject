@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>user_detail</title>
+  </head>
+  <body>
+    <div style="display: flex; align-items: center;">
+      <p style="margin-right: 10px;">ID : </p>
+      <form action="{{ url_for('user_detail', user_id=user_id) }}" method="get">
+          <button type="submit">{{ user_id }}</button>
+      </form>
+    </div>
+    <form action="{{ url_for('logout') }}" method="get">
+      <button type="submit">logout</button>
+    </form>
+    <form action="{{ url_for('mainpage') }}" method="get">
+      <button type="submit">mainpage</button>
+    </form>
+
+    <h1>{{ user_id }}'s mypage</h1>
+    
+    <h3>[Reviews]</h3>
+    <table border="1">
+      <thead>
+        <th>ratings</th>
+        <th>movies</th>
+        <th>review</th>
+        <th>time</th>
+      </thead>
+      <tbody>
+        {% for user_detail in user_detail %}
+        <tr>
+          <td>{{user_detail[1]}}</td>
+          <td>
+            <form action="{{ url_for('movie_detail_bytitle_redirect', movie_title=user_detail[2]) }}" method="get">
+              <button type="submit">{{ user_detail[2]}}</button>
+            </form></td></td>
+          <td>{{user_detail[3]}}</td>
+          <td>{{user_detail[4]}}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h3>[followers]</h3>
+    <table>
+      <tbody>
+        {% for follow in follows %}
+        <tr>
+          <td>
+            <form action="{{ url_for('user_detail', user_id=follow[0]) }}" method="get">
+            <button type="submit">{{ follow[0] }}</button>
+            </form>
+          </td>
+        </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h3>Add Movie</h3>
+    <form action="{{ url_for('add_movie') }}" method="post">
+        <label for="title">Title:</label><br>
+        <input type="text" id="title" name="title"><br><br>
+
+        <label for="director">Director:</label><br>
+        <input type="text" id="director" name="director"><br><br>
+
+        <label for="genre">Genre:</label><br>
+        <select id="genre" name="genre">
+            <option value="action">action</option>
+            <option value="comedy">comedy</option>
+            <option value="fantasy">fantasy</option>
+            <option value="horror">horror</option>
+            <option value="mystery">mystery</option>
+            <option value="romance">romance</option>
+            <option value="thriller">thriller</option>
+            <option value="western">western</option>
+        </select><br><br>
+
+        <label for="release_date">Release Date:</label><br>
+        <input type="date" id="release_date" name="release_date"><br><br>
+
+        <input type="submit" value="Add">
+    </form>
+
+    
+  </body>
+</html>

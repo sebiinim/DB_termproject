@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>main</title>
+  </head>
+
+  <body>
+    <div style="display: flex; align-items: center;">
+      <p style="margin-right: 10px;">ID : </p>
+      <form action="{{ url_for('user_detail', user_id=user_id) }}" method="get">
+          <button type="submit">{{ user_id }}</button>
+      </form>
+    </div>
+  
+    <form action="{{ url_for('logout') }}" method="get">
+      <button type="submit">logout</button>
+    </form>
+    <form action="{{ url_for('mainpage') }}" method="get">
+      <button type="submit">mainpage</button>
+    </form>
+
+
+    <h1>Movies</h1>
+    <form action="/main" method="post">  <!-- 페이지를 새로고침하여 최신순으로 리뷰를 표시하는 버튼 -->
+      <button type="submit" name="sort_by1" value="latest">latest</button>
+      <button type="submit" name="sort_by1" value="genre">genre</button> <!-- 장르 알파벳순으로 리뷰를 정렬하는 버튼 -->
+      <button type="submit" name="sort_by1" value="ratings">ratings</button>
+    </form>
+
+    <table border="1">
+      <thead>
+        <th>title</th>
+        <th>ratings</th>
+        <th>director</th>
+        <th>genre</th>
+        <th>release date</th>
+      </thead>
+
+      <tbody>
+        {% for movie in movies %}
+        <tr>
+          <td>
+            <form action="{{ url_for('movie_detail', movie_id=movie[0]) }}" method="get">
+                <button type="submit">{{ movie[1]}}</button>
+            </form></td>
+          <td>{{ movie[5] }}</td>
+          <td>{{ movie[2] }}</td>
+          <td>{{ movie[3] }}</td>
+          <td>{{ movie[4] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <br></br>
+    <h1>Reviews</h1>
+    <form action="/main" method="post">  <!-- 페이지를 새로고침하여 최신순으로 리뷰를 표시하는 버튼 -->
+      <button type="submit" name="sort_by2" value="latest">latest</button>
+      <button type="submit" name="sort_by2" value="title">title</button> <!-- 장르 알파벳순으로 리뷰를 정렬하는 버튼 -->
+      <button type="submit" name="sort_by2" value="followers">followers</button>
+    </form>
+    <table border = "1">
+      <thead>
+        <th>ratings</th>
+        <th>user</th>
+        <th>title</th>
+        <th>review</th>
+        <th>time</th>
+      </thead>
+      <tbody>
+        {% for review in reviews %}
+        <tr>
+          <td>{{ review[0] }}</td>
+          <td>
+            <form action="{{ url_for('user_detail', user_id=review[6]) }}" method="get">
+              <button type="submit">{{ review[6] }}</button>
+            </form>
+          </td>        
+          <td>
+            <form action="{{ url_for('movie_detail', movie_id=review[0]) }}" method="get">
+                <button type="submit">{{ review[1] }}</button>
+            </form>
+          </td>
+        
+          <td>{{ review[8] }}</td>
+          <td>{{ review[9] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>

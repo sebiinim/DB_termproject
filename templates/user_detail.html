@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>user_detail</title>
+  </head>
+  <body>
+    <div style="display: flex; align-items: center;">
+      <p style="margin-right: 10px;">ID : </p>
+      <form action="{{ url_for('user_detail', user_id=user_id) }}" method="get">
+          <button type="submit">{{ user_id }}</button>
+      </form>
+    </div>
+    <form action="{{ url_for('logout') }}" method="get">
+      <button type="submit">logout</button>
+    </form>
+    <form action="{{ url_for('mainpage') }}" method="get">
+      <button type="submit">mainpage</button>
+    </form>
+
+    <h1>{{user_detail[0][0]}}</h1>
+    <form action="{{ url_for('follow_user', user_id = user_detail[0][0]) }}" method="get">
+      <button type="submit">follow</button>
+    </form>  
+
+    <form action="{{ url_for('mute_user', user_id = user_detail[0][0]) }}" method="get">
+      <button type="submit">mute</button>
+    </form>  
+
+    <h3>[Reviews]</h3>
+    <table border="1">
+      <thead>
+        <th>ratings</th>
+        <th>movies</th>
+        <th>review</th>
+        <th>time</th>
+      </thead>
+      <tbody>
+        {% for user_detail in user_detail %}
+        <tr>
+          <td>{{user_detail[1]}}</td>
+          <td>
+            <form action="{{ url_for('movie_detail_bytitle_redirect', movie_title=user_detail[2]) }}" method="get">
+              <button type="submit">{{ user_detail[2]}}</button>
+            </form></td></td>
+          <td>{{user_detail[3]}}</td>
+          <td>{{user_detail[4]}}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>
