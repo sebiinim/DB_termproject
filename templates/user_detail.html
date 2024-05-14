@@ -7,7 +7,7 @@
   <body>
     <div style="display: flex; align-items: center;">
       <p style="margin-right: 10px;">ID : </p>
-      <form action="{{ url_for('user_detail', user_id=user_id) }}" method="get">
+      <form action="{{ url_for('user_detail', user_id=user_detail[0][0]) }}" method="get">
           <button type="submit">{{ user_id }}</button>
       </form>
     </div>

@@ -114,21 +114,37 @@ def mainpage():
   
   return render_template("main.html", movies=result1, reviews=result2, user_id = user_id)
 
-@app.route('/movie_detail/<string:movie_id>')
+@app.route('/movie_detail/<string:movie_id>', methods=['POST', 'GET'])
 def movie_detail(movie_id):
-  user_id = session['id']
-  
-  cur.execute("select director, genre, rel_date, title, id from movies where id = %s", (movie_id,))
-  result1 = cur.fetchone()
-  
-  cur.execute("SELECT ratings, uid, review, rev_time from reviews \
-    where reviews.mid = %s ORDER BY review;", (movie_id,))
-  result2 = cur.fetchall()
-  
-  cur.execute("select trunc(avg(ratings),1) from reviews where mid = %s group by mid", (movie_id,))
-  result3 = cur.fetchone()
-  return render_template("movie_detail.html", movie_detail=result1, movie_reviews=result2, \
-    avg_rating=result3, user_id = user_id)
+    user_id = session['id']
+    
+    cur.execute("SELECT director, genre, rel_date, title, id FROM movies WHERE id = %s", (movie_id,))
+    result1 = cur.fetchone()
+    
+    current_sort_by = 'latest'
+    
+    if request.method == 'POST':
+      sort_by = request.form.get('sort_by')
+      if sort_by == 'rating':
+        current_sort_by = "rating"
+      elif sort_by == 'user':
+        current_sort_by = "user"
+      elif sort_by == 'latest':  # 'latest' 경우
+        current_sort_by = "latest"
+    
+    if current_sort_by == "rating":
+      cur.execute("SELECT ratings, uid, review, rev_time FROM reviews WHERE mid = %s ORDER BY ratings DESC;", (movie_id,))
+    elif current_sort_by == "user":
+      cur.execute("SELECT ratings, uid, review, rev_time FROM reviews WHERE mid = %s ORDER BY uid;", (movie_id,))
+    elif current_sort_by == "latest":
+      cur.execute("SELECT ratings, uid, review, rev_time FROM reviews WHERE mid = %s ORDER BY rev_time DESC;", (movie_id,))
+    result2 = cur.fetchall()
+    
+    cur.execute("SELECT TRUNC(AVG(ratings), 1) FROM reviews WHERE mid = %s GROUP BY mid", (movie_id,))
+    result3 = cur.fetchone()
+    
+    return render_template("movie_detail.html", movie_detail=result1, movie_reviews=result2, \
+                            avg_rating=result3, user_id=user_id)
 
 @app.route('/movie_detail_bytitle_redirect/<string:movie_title>')
 def movie_detail_bytitle_redirect(movie_title):
@@ -157,18 +173,26 @@ def user_detail(user_id):
     cur.execute("select opid from ties WHERE id = %s and tie = 'mute'", (user_id_session,))
     result4 = cur.fetchall()
     
+    cur.execute("select email from user_info where id = %s", (user_id_session,))
+    result5 = cur.fetchall()
+    
     if user_id_session in ['admin', 'admin2']:
       return render_template("mypage_admin.html", user_detail = result1, user_id = user_id_session)
     
     else:
       return render_template("mypage.html", user_detail = result1, user_id = user_id_session \
-        ,followed = result2, following = result3, muting = result4)
+        ,followed = result2, following = result3, muting = result4, email = result5)
       
   else:
-    cur.execute("select uid, ratings, title, review, rev_time FROM user_info, reviews, movies \
-      where user_info.id = reviews.uid and reviews.mid = movies.id and reviews.uid = %s order by rev_time DESC", (user_id,))
+    cur.execute("select distinct uid, ratings, title, review, rev_time FROM reviews, movies \
+      where reviews.mid = movies.id and reviews.uid = %s order by rev_time DESC", (user_id,))
     result1 = cur.fetchall()
-    return render_template("user_detail.html", user_detail = result1, user_id = user_id_session)
+
+    if not result1:
+      result1 = [[user_id, ' ', ' ', ' ', ' ']]
+
+  return render_template("user_detail.html", user_detail=result1, user_id=user_id_session)
+
 
 #Follow or Mute
 @app.route('/follow_user/<string:user_id>')
@@ -323,6 +347,20 @@ def add_movie():
     
   return render_template("mypage_admin.html", user_detail = result1, user_id = user_id_session)
 
+@app.route('/update_email', methods=['POST'])
+def update_email():
+    # 세션에서 현재 사용자의 ID 가져오기
+    user_id = session.get('id')
+    
+    # 사용자가 제출한 새로운 이메일 주소 가져오기
+    new_email = request.form.get('email')
+    
+    # 데이터베이스에 새로운 이메일 주소 업데이트
+    cur.execute("UPDATE user_info SET email = %s WHERE id = %s", (new_email, user_id))
+    connect.commit()
+    
+    # 마이페이지로 리다이렉트
+    return redirect(url_for('user_detail', user_id=user_id))
 
 
 if __name__ == '__main__':

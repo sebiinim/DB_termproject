@@ -36,6 +36,13 @@
 
     <h3>[Reviews]</h3>
     <h4>Average Rating: {{avg_rating[0]}}</h4>
+
+    <form action="{{ '/movie_detail/' ~ movie_detail[4] }}" method="POST">
+      <button type="submit" name="sort_by" value="rating">rating</button>
+      <button type="submit" name="sort_by" value="user">user</button>
+      <button type="submit" name="sort_by" value="latest">latest</button>
+    </form>
+
     <table border="1">
       <thead>
         <th>ratings</th>
