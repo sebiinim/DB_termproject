@@ -39,6 +39,7 @@ def signup():
     return render_template("signup_fail.html", isRegisteredId=isRegisteredId)
   else:
     cur.execute("insert into users (id, password, role) values (%s, %s, 'user')", (id, password))
+    cur.execute("insert into user_info (id, name, email, reg_date) values (%s, %s, 'set@email.now', now())", (id, id))
     connect.commit()
     return redirect(url_for('loginmain'))
   
@@ -190,8 +191,11 @@ def user_detail(user_id):
 
     if not result1:
       result1 = [[user_id, ' ', ' ', ' ', ' ']]
+      
+    cur.execute("select email from user_info where id = %s", (user_id,))
+    result5 = cur.fetchall()
 
-  return render_template("user_detail.html", user_detail=result1, user_id=user_id_session)
+  return render_template("user_detail.html", user_detail=result1, user_id=user_id_session, email=result5)
 
 
 #Follow or Mute
@@ -223,58 +227,41 @@ def follow_user(user_id):
 
 @app.route('/mute_user/<string:user_id>')
 def mute_user(user_id):
-    user_id_session = session['id']  # 현재 로그인한 사용자의 ID
+    user_id_session = session['id']  
 
-    # 이미 follow 관계가 존재하는지 확인
     cur.execute("SELECT * FROM ties WHERE id = %s AND opid = %s AND tie = 'follow'", (user_id_session, user_id))
     existing_follow_relationship = cur.fetchone()
 
     if existing_follow_relationship:
-        # follow 관계를 삭제
         cur.execute("DELETE FROM ties WHERE id = %s AND opid = %s AND tie = 'follow'", (user_id_session, user_id))
         connect.commit()
 
-    # 이미 mute 관계가 존재하는지 확인
     cur.execute("SELECT * FROM ties WHERE id = %s AND opid = %s AND tie = 'mute'", (user_id_session, user_id))
     existing_mute_relationship = cur.fetchone()
 
     if existing_mute_relationship:
-        # 이미 존재하는 관계이므로 중복 삽입을 막기 위해 아무 작업도 하지 않고 리디렉션
         return redirect(url_for('user_detail', user_id=user_id))
     else:
-        # mute 관계를 삽입
         cur.execute("INSERT INTO ties (id, opid, tie) VALUES (%s, %s, 'mute')", (user_id_session, user_id))
         connect.commit()
         return redirect(url_for('user_detail', user_id=user_id))
 
 @app.route('/unfollow_user/<string:user_id>')
 def unfollow_user(user_id):
-  user_id_session = session['id']  # 현재 로그인한 사용자의 ID
+  user_id_session = session['id']  
 
-  # 이미 팔로우 관계가 존재하는지 확인
   cur.execute("SELECT * FROM ties WHERE id = %s AND opid = %s AND tie = 'follow'", (user_id_session, user_id))
   existing_follow_relationship = cur.fetchone()
 
   if existing_follow_relationship:
-    # 팔로우 관계를 삭제
     cur.execute("DELETE FROM ties WHERE id = %s AND opid = %s AND tie = 'follow'", (user_id_session, user_id))
     connect.commit()
-        
-  cur.execute("select uid, ratings, title, review, rev_time FROM user_info, reviews, movies \
-      WHERE user_info.id = reviews.uid and reviews.mid = movies.id and reviews.uid = %s order by rev_time DESC", (user_id_session,))
-  result1 = cur.fetchall()
-    
-  cur.execute("select opid from ties WHERE id = %s and tie = 'follow'", (user_id_session,))
-  result2 = cur.fetchall()
-    
-  cur.execute("select opid from ties WHERE id = %s and tie = 'mute'", (user_id_session,))
-  result3 = cur.fetchall()
     
   return redirect(url_for('user_detail', user_id = user_id_session))
 
 @app.route('/unmute_user/<string:user_id>')
 def unmute_user(user_id):
-  user_id_session = session['id']  # 현재 로그인한 사용자의 ID
+  user_id_session = session['id'] 
 
   cur.execute("SELECT * FROM ties WHERE id = %s AND opid = %s AND tie = 'mute'", (user_id_session, user_id))
   existing_follow_relationship = cur.fetchone()
@@ -282,20 +269,9 @@ def unmute_user(user_id):
   if existing_follow_relationship:
     cur.execute("DELETE FROM ties WHERE id = %s AND opid = %s AND tie = 'mute'", (user_id_session, user_id))
     connect.commit()
-        
-  cur.execute("select uid, ratings, title, review, rev_time FROM user_info, reviews, movies \
-      WHERE user_info.id = reviews.uid and reviews.mid = movies.id and reviews.uid = %s order by rev_time DESC", (user_id_session,))
-  result1 = cur.fetchall()
-    
-  cur.execute("select opid from ties WHERE id = %s and tie = 'follow'", (user_id_session,))
-  result2 = cur.fetchall()
-    
-  cur.execute("select opid from ties WHERE id = %s and tie = 'mute'", (user_id_session,))
-  result3 = cur.fetchall()
     
   return redirect(url_for('user_detail', user_id = user_id_session))
   
-from datetime import datetime
 
 @app.route('/submit_review', methods=['POST'])
 def submit_review():
@@ -306,16 +282,14 @@ def submit_review():
     review = request.form['review']
     rev_time = datetime.now()
 
-    # 해당 사용자가 이미 작성한 리뷰가 있는지 확인
   cur.execute("SELECT * FROM reviews WHERE mid = %s AND uid = %s", (mid, uid))
   existing_review = cur.fetchone()
 
   if existing_review:
-    # 이미 작성한 리뷰가 있으면 삭제
     cur.execute("DELETE FROM reviews WHERE mid = %s AND uid = %s", (mid, uid))
     connect.commit()
 
-  # 새 리뷰 삽입
+  # 새 리뷰
   cur.execute("INSERT INTO reviews (mid, uid, ratings, review, rev_time) VALUES (%s, %s, %s, %s, %s)", \
     (mid, uid, ratings, review, rev_time))
   connect.commit()
@@ -349,17 +323,13 @@ def add_movie():
 
 @app.route('/update_email', methods=['POST'])
 def update_email():
-    # 세션에서 현재 사용자의 ID 가져오기
     user_id = session.get('id')
     
-    # 사용자가 제출한 새로운 이메일 주소 가져오기
     new_email = request.form.get('email')
     
-    # 데이터베이스에 새로운 이메일 주소 업데이트
     cur.execute("UPDATE user_info SET email = %s WHERE id = %s", (new_email, user_id))
     connect.commit()
     
-    # 마이페이지로 리다이렉트
     return redirect(url_for('user_detail', user_id=user_id))
 
 
